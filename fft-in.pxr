@@ -1,7 +1,8 @@
 @ /audio root:audio {
   #%autostart true
   #%praxis.version 4.4.0
-  .library JACK
+  .library JavaSound
+  .ext-buffer-size 64
   @ ./output audio:output {
     #%graph.x 1316
     #%graph.y 127
@@ -299,7 +300,7 @@ import org.jaudiolibs.pipes.Pipe;
     \}
     
 "
-    .level 0.04455445544554455
+    .level 0.20270270270270271
   }
   ~ ./fft!power-data ./send!in
   ~ ./fft!out ./muter!in

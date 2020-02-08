@@ -6,11 +6,9 @@ include [file "video.pxr"]
 include [file "eq-control.pxr"]
 include [file "fft-in.pxr"]
 include [file "control.pxr"]
-include [file "gui.pxr"]
 
 # <<<RUN>>>
 include [file "config/video_autostart"]
 include [file "config/eq-control_autostart"]
 include [file "config/fft-in_autostart"]
 include [file "config/control_autostart"]
-include [file "config/gui_autostart"]

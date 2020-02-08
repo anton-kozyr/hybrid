@@ -550,9 +550,10 @@ import java.io.IOException;
         \}
     \}
 "
-    .movement-speed 34.98260241895493
-    .time-to-move 0.9999977678425735
-    .cells-count 12
+    .move-to-centre true
+    .movement-speed 18
+    .time-to-move 1.1044821664564684
+    .cells-count 30
     .width 1920
     .height 1200
   }
@@ -7455,6 +7456,7 @@ void main()
         \}
     \}
 "
+      .ping-combined-in 1
     }
     @ ./explosion video:gl:p2d {
       #%graph.x 824
@@ -9882,6 +9884,7 @@ void main()
         \}
     \}
 "
+      .ping-combined-in 1
     }
     @ ./city video:gl:p2d {
       #%graph.x 396
@@ -10301,9 +10304,9 @@ void main()
     
     gl_FragColor = vec4( col, 1.0 );
 \}"
-      .c-1 0.17490162555436928
-      .c-2 0.10248895865911312
-      .c-3 0.6010318824125171
+      .c-1 0.7380869577367023
+      .c-2 0.7637352011832953
+      .c-3 0.3561964751321113
     }
     @ ./lines video:gl:p2d {
       #%graph.x 529
@@ -10800,6 +10803,7 @@ void main() \{
         \}
     \}
 "
+      .ping-combined-in 1
     }
     @ ./strobe-0 video:gl:p2d {
       #%graph.x -1211
@@ -11991,6 +11995,7 @@ import java.io.IOException;
         \}
     \}
 "
+      .ping-combined-in 1
     }
     @ ./strobe-0 video:gl:p2d {
       #%graph.x -1299
@@ -12183,9 +12188,8 @@ void main() \{
 \}"
     }
     @ ./strobe-2 video:gl:p2d {
-      #%graph.x -1299
-      #%graph.y -231
-      #%graph.minimized true
+      #%graph.x -1300
+      #%graph.y -230
       .code "import java.awt.Color;
 
     @P(0) @Type.Number(min = 0, max = 1) double ease;
@@ -12282,7 +12286,7 @@ void main() \{
       #%graph.y -648
     }
     @ ./voronoi-renderer1 video:gl:p2d {
-      #%graph.x -279
+      #%graph.x -278
       #%graph.y -466
       .code "import org.locationtech.jts.geom.*;
 import java.io.DataInputStream;
@@ -12525,18 +12529,16 @@ import java.io.IOException;
     \}
 "
       .cells-inputs 7
-      .edge-width 34.40895891319888
+      .edge-width 5.335720890574503
       .draw-cells true
       .just-colours false
     }
     @ ./composite-0 video:composite {
       #%graph.x -674
       #%graph.y -191
-      .mode BitXor
-      .mix 0.39603960396039606
     }
     @ ./colour-0 video:gl:p2d {
-      #%graph.x -969
+      #%graph.x -1011
       #%graph.y -167
       .code "import java.awt.Color;
 
@@ -12619,14 +12621,14 @@ import java.io.IOException;
         brightness = hsb\[2\];
     \}
 "
-      .int-rgb -13499546
-      .hex-rgb 320366
-      .red 50.0
+      .int-rgb -8125594
+      .hex-rgb 840366
+      .red 132.66891891891893
       .green 3.0
       .blue 102.0
-      .hue 0.7455196976661682
-      .saturation 0.96875
-      .brightness 0.400990099009901
+      .hue 0.8720930218696594
+      .saturation 0.9772727489471436
+      .brightness 0.5176470875740051
     }
     @ ./control core:custom {
       #%graph.x -1544
@@ -12970,14 +12972,103 @@ void main()
 	gl_FragColor = vec4( col, 1.0 );
 \}"
     }
+    @ ./hsv video:gl:p2d {
+      #%graph.x -819
+      #%graph.y -57
+      .code "
+
+    @P(1) @Type.Number(min=0, max=360, def=0) double hue;
+    @P(2) @Type.Number(min=0, max=2, def=1) double saturation;
+    @P(3) @Type.Number(min=0, max=2, def=1) double value;
+    
+    void updateUniforms() \{
+         shader.set(\"hue\", hue);
+         shader.set(\"saturation\", saturation);
+         shader.set(\"value\", value);
+    \}
+
+    
+    // BOILERPLATE BELOW
+    @In(0)
+    PImage in;
+    @P(0)
+    @Type.String(mime = GLSL_FRAGMENT_MIME, template = DEFAULT_FRAGMENT_SHADER)
+    @OnChange(\"updateShader\")
+    @Config.Port(false)
+    String fragment;
+
+    PShader shader;
+
+    @Override
+    public void setup() \{
+        updateShader();
+    \}
+
+    @Override
+    public void draw() \{
+        if (shader == null) \{
+            shader = createShader(DEFAULT_VERTEX_SHADER,
+                    fragment.isEmpty() ? DEFAULT_FRAGMENT_SHADER : fragment);
+        \}
+        shader(shader);
+        updateUniforms();
+        image(in, 0, 0);
+        resetShader();
+    \}
+
+    void updateShader() \{
+        shader = null;
+    \}
+
+"
+      .fragment "// https://gamedev.stackexchange.com/a/59808
+uniform sampler2D texture;
+
+uniform vec2 texOffset;
+
+uniform float hue;
+uniform float saturation;
+uniform float value;
+
+varying vec4 vertColor;
+varying vec4 vertTexCoord;
+
+vec3 rgb2hsv(vec3 c) \{
+    vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+    vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
+    vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
+
+    float d = q.x - min(q.w, q.y);
+    float e = 1.0e-10;
+    return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+\}
+
+vec3 hsv2rgb(vec3 c) \{
+    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+\}
+
+void main() \{
+    vec4 textureColor = texture2D(texture, vertTexCoord.st) * vertColor;
+    vec3 fragRGB = textureColor.rgb;
+    vec3 fragHSV = rgb2hsv(fragRGB).xyz;
+    fragHSV.x += hue / 360.0;
+    fragHSV.y *= saturation;
+    fragHSV.z *= value;
+    fragRGB = hsv2rgb(fragHSV);
+    gl_FragColor = vec4(fragRGB, textureColor.a);
+\}"
+      .hue 282.16216216216213
+      .saturation 0.40540540540540543
+      .value 0.7027027027027027
+    }
     ~ ./ping-control!ping-1-yellow ./strobe-0!strobe
     ~ ./ping-control!ping-0-red ./strobe-1!strobe
     ~ ./ping-control!ping-2-cyan ./strobe-2!strobe
     ~ ./strobe-1!out ./voronoi-renderer1!in-0
     ~ ./strobe-0!out ./voronoi-renderer1!in-edges
     ~ ./strobe-2!out ./voronoi-renderer1!in-2
-    ~ ./colour-0!out ./composite-0!src
-    ~ ./composite-0!out ./voronoi-renderer1!in-4
     ~ ./control!properties-out ./properties-out!in
     ~ ./control!x-fade ./x-fader-send!in
     ~ ./start-trigger-1!out ./tunnel!shake-it
@@ -12989,8 +13080,11 @@ void main()
     ~ ./ping-control!ping-1-yellow ./tunnel!shake-it
     ~ ./composite-0!out ./voronoi-renderer1!in-edges
     ~ ./tunnel!out ./voronoi-renderer1!in-3
-    ~ ./composite-0!out ./voronoi-renderer1!in-5
+    ~ ./tunnel!out ./voronoi-renderer1!in-4
     ~ ./composite-0!out ./voronoi-renderer1!in-6
+    ~ ./composite-0!out ./voronoi-renderer1!in-5
+    ~ ./tunnel!out ./hsv!in
+    ~ ./hsv!out ./composite-0!src
   }
   ~ ./voronoi-generator!voronoi-out ./bw!in
   ~ ./voronoi-generator!properties-out ./bw-control!in
