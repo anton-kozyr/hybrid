@@ -1,0 +1,280 @@
+@ /control root:data {
+  #%praxis.version 4.4.0
+  @ ./router core:custom {
+    #%graph.x 386
+    #%graph.y 144
+    .code "
+
+    @Out(0) Output resetEqOut;
+    @Out(1) Output moveCellsOut;
+    
+    @Out(10) Output bwFastEdgesOut;
+    @Out(12) Output bwWhiteCellsOut;
+    @Out(14) Output bwStrobeCellsOut;
+    @Out(16) Output bwFluidEdgesOut;
+    
+    @Out(20) Output clJustCloudsOut;
+    @Out(22) Output clGustsOut;
+    @Out(24) Output clShuffleOut;
+    @Out(26) Output clThunderOut;
+    
+    @Out(28) Output colGreyOut;
+    @Out(30) Output colColoursOut;
+    @Out(32) Output colRedBlackOut;
+    
+    @Out(34) Output videoOut;
+    @Out(36) Output screenshotOut;
+    @Out(38) Output praxisOut;
+    @Out(40) Output tidalOut;
+        
+    @Inject Property mainLoopTimer;
+    @Inject boolean mainLoop;
+    @Inject int sceneNo;
+    
+    @Inject Property bwLoopTimer;
+    @Inject boolean bw;
+    
+    
+    @T(0) void resetEq() \{
+        resetEqOut.send();
+    \}
+    
+    @T(1) void moveCells() \{
+        moveCellsOut.send();
+    \}
+    
+    @T(5) void loopAll() \{
+        mainLoop = true;
+        mainLoop();
+    \}
+        
+    void mainLoop() \{
+         if (mainLoop) \{
+           
+            if (0 == sceneNo) \{
+                bwAll();
+            \} else if (1 == sceneNo) \{
+                clThunder();
+            \} else if (2 == sceneNo) \{
+                colColours();
+            \} else if (3 == sceneNo) \{
+                colRedBlack();
+            \} else if (4 == sceneNo) \{
+                video();
+            \} else if (5 == sceneNo) \{
+                cityBuildings();
+            \} else if (6 == sceneNo) \{
+                colColours();
+            \} else if (7 == sceneNo) \{
+                explosion();
+            \} else if (8 == sceneNo) \{
+                bubbles();
+            \} else \{
+                experiment();
+            \}
+            sceneNo += 1;
+            if(sceneNo > 9) \{
+                sceneNo = 0;
+            \}
+            
+            mainLoopTimer.to(random(0, 100)).in(10*60).whenDone(p1 -> \{
+                mainLoop();
+            \});
+        \}
+    \}
+        
+    @T(6) void stopMainLoop() \{
+        mainLoop = false;
+    \}
+    
+    @T(8) void bwAll() \{
+        bw = true;
+        loopBw();
+    \}
+    
+    @T(9) void stopBwLoop() \{
+        bw = false;
+    \}
+    
+    void loopBw() \{
+        if (bw) \{
+            double r = random(0, 40);
+            if (r < 10) \{
+                bwFastEdgesOut.send();
+            \} else if (r < 20) \{
+                bwWhiteCellsOut.send();
+            \} else if (r < 30) \{
+                bwStrobeCellsOut.send();
+            \} else \{
+                bwFluidEdgesOut.send();
+            \}
+            bwLoopTimer.to(random(0, 100)).in(60).whenDone(p1 -> \{
+                loopBw();
+            \});
+        \}
+    \}
+    
+    @T(10) void bwFastEdges() \{ bwFastEdgesOut.send(); \} 
+    @T(12) void bwWhiteCells() \{ bwWhiteCellsOut.send(); \} 
+    @T(14) void bwStrobeCells() \{ bwStrobeCellsOut.send(); \} 
+    @T(16) void bwFluidEdges() \{ bwFluidEdgesOut.send(); \} 
+     
+//    @T(20) void clJustClouds() \{ clJustCloudsOut.send(); \} 
+//    @T(22) void clGusts() \{ clGustsOut.send(); \} 
+//    @T(24) void clShuffle() \{ clShuffleOut.send(); \} 
+    @T(26) void clThunder() \{ 
+        bw = false;
+        clThunderOut.send();
+    \} 
+     
+    //@T(28) void colGrey() \{ colGreyOut.send(); \} 
+    @T(30) void colColours() \{
+        bw = false;
+        colColoursOut.send();
+    \} 
+    @T(32) void colRedBlack() \{
+        bw = false;
+        colRedBlackOut.send();
+    \} 
+     
+    @T(34) void video() \{
+        bw = false;
+        videoOut.send();
+    \} 
+    @T(36) void cityBuildings() \{
+        bw = false;
+        try \{
+            tell(ControlAddress.parse(\"/video/city-buildings/control.city-buildings\"), 1);
+        \} catch (ValueFormatException e) \{
+            log(ERROR, \"Bad address in router\");
+        \}
+    \} 
+    @T(37) void explosion() \{
+        bw = false;
+        try \{
+            tell(ControlAddress.parse(\"/video/explosion/control.explosion\"), 1);
+        \} catch (ValueFormatException e) \{
+            log(ERROR, \"Bad address in router\");
+        \}
+    \} 
+    @T(40) void bubbles() \{
+        bw = false;
+        try \{
+            tell(ControlAddress.parse(\"/video/bubbles/control.bubbles\"), 1);
+        \} catch (ValueFormatException e) \{
+            log(ERROR, \"Bad address in router\");
+        \}
+    \}
+    @T(41) void experiment() \{
+        bw = false;
+        try \{
+            tell(ControlAddress.parse(\"/video/experiment/control.experiment\"), 1);
+        \} catch (ValueFormatException e) \{
+            log(ERROR, \"Bad address in router\");
+        \}
+    \}
+"
+  }
+  @ ./send-1 core:routing:send {
+    #%graph.x 913
+    #%graph.y 144
+    .address /video/voronoi-generator.move-cells
+  }
+  @ ./send-2 core:routing:send {
+    #%graph.x 913
+    #%graph.y 194
+    .address /video/bw/control.fast-edges
+  }
+  @ ./send-3 core:routing:send {
+    #%graph.x 913
+    #%graph.y 244
+    .address /video/bw/control.white-cells
+  }
+  @ ./send-4 core:routing:send {
+    #%graph.x 913
+    #%graph.y 294
+    .address /video/bw/control.strobe-cells
+  }
+  @ ./send-5 core:routing:send {
+    #%graph.x 913
+    #%graph.y 344
+    .address /video/bw/control.fluid-edges
+  }
+  @ ./send-6 core:routing:send {
+    #%graph.x 913
+    #%graph.y 394
+    .address /video/clouds/control.just-clouds
+  }
+  @ ./send-7 core:routing:send {
+    #%graph.x 913
+    #%graph.y 444
+    .address /video/clouds/control.gusts
+  }
+  @ ./send-8 core:routing:send {
+    #%graph.x 913
+    #%graph.y 494
+    .address /video/clouds/control.shuffle
+  }
+  @ ./send-9 core:routing:send {
+    #%graph.x 913
+    #%graph.y 544
+    .address /video/clouds/control.thunder
+  }
+  @ ./send-10 core:routing:send {
+    #%graph.x 913
+    #%graph.y 594
+    .address /video/colours/control.grey
+  }
+  @ ./send-11 core:routing:send {
+    #%graph.x 913
+    #%graph.y 644
+    .address /video/colours/control.colours
+  }
+  @ ./send-12 core:routing:send {
+    #%graph.x 913
+    #%graph.y 694
+    .address /video/colours/control.red-and-black
+  }
+  @ ./send-13 core:routing:send {
+    #%graph.x 913
+    #%graph.y 744
+    .address /video/videos/control.buildings
+  }
+  @ ./send-14 core:routing:send {
+    #%graph.x 913
+    #%graph.y 794
+    .address /video/videos/control.screenshot
+  }
+  @ ./send-15 core:routing:send {
+    #%graph.x 913
+    #%graph.y 844
+    .address /video/videos/control.praxis
+  }
+  @ ./send-16 core:routing:send {
+    #%graph.x 913
+    #%graph.y 894
+    .address /video/videos/control.tidal
+  }
+  @ ./send-0 core:routing:send {
+    #%graph.x 913
+    #%graph.y 94
+    .address /eq-control/eq.reset-to-defaults
+  }
+  ~ ./router!move-cells-out ./send-1!in
+  ~ ./router!bw-fast-edges-out ./send-2!in
+  ~ ./router!bw-white-cells-out ./send-3!in
+  ~ ./router!bw-strobe-cells-out ./send-4!in
+  ~ ./router!bw-fluid-edges-out ./send-5!in
+  ~ ./router!cl-just-clouds-out ./send-6!in
+  ~ ./router!cl-gusts-out ./send-7!in
+  ~ ./router!cl-shuffle-out ./send-8!in
+  ~ ./router!cl-thunder-out ./send-9!in
+  ~ ./router!col-grey-out ./send-10!in
+  ~ ./router!col-colours-out ./send-11!in
+  ~ ./router!col-red-black-out ./send-12!in
+  ~ ./router!video-out ./send-13!in
+  ~ ./router!screenshot-out ./send-14!in
+  ~ ./router!praxis-out ./send-15!in
+  ~ ./router!tidal-out ./send-16!in
+  ~ ./router!reset-eq-out ./send-0!in
+}
